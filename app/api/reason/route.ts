@@ -10,24 +10,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Payload stream data cannot be blank entries." }, { status: 400 });
     }
 
-    // 1. Force the strict, local, immutable analysis logic tracking steps
     const baseContext = orchestrator.handlePayload(message);
     const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
     if (!GROQ_API_KEY) {
-      // Clean dynamic operational fallback warning if Vercel secrets are not injected yet
       return NextResponse.json({
         ...baseContext,
         finalOutputManifest: {
-          conversationalGreeting: "System Mode Notice: Guanyin core pipeline is active locally.",
-          structuralSummary: "Please mount your [GROQ_API_KEY] environment token variable within your cloud panel configurations to toggle live intelligence loops.",
-          verificationSteps: ["Mount environment variable parameters.", "Deploy code package updates."]
+          conversationalGreeting: "System Notice: Pipeline running locally.",
+          structuralSummary: "Please add your GROQ_API_KEY in the Vercel dashboard to unlock full AI reasoning.",
+          verificationSteps: ["Add the environment variable in Vercel settings.", "Trigger a redeploy."]
         },
-        pipelineAuditLog: [...baseContext.pipelineAuditLog, "[Inference Layer Warning]: Missing live API target keys. Reverting configuration to baseline mock manifests."]
+        pipelineAuditLog: [...baseContext.pipelineAuditLog, "[Inference Layer]: Missing API key. Running locally."]
       });
     }
 
-    // 2. Dispatch data payload structures directly to Groq's low-latency inference matrix
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -42,29 +39,27 @@ export async function POST(request: Request) {
             role: "system",
             content: `You are the core intelligence processor of the Guanyin Technical Reasoning Fabric.
             The current pipeline execution lane is: ${baseContext.detectedIntent}.
-            
-            Observe facts and system constraints directly. Avoid guessing or template answers.
-            You must reply with a valid JSON object matching this exact structural schema contract:
+            Reply with a valid JSON object matching this exact schema:
             {
-              "systemObjective": "Clear description of what the user is attempting to perform or fix",
-              "observations": [{"id": "OBS-001", "literalContent": "Clean fact value extracted", "derivedWeight": "HIGH/LOW"}],
-              "retrievedKnowledge": [{"domainConcept": "Technical concept/Mechanism name", "mechanicsSummary": "How it scales or behaves under the hood rules"}],
-              "hypotheses": [{"targetMechanism": "Detailed breakdown of the underlying logic failure cause", "contradictionsIdentified": [], "isolatedConfidence": "HIGH/MEDIUM/LOW"}],
+              "systemObjective": "Description of user goal",
+              "observations": [{"id": "OBS-001", "literalContent": "Fact string", "derivedWeight": "HIGH/LOW"}],
+              "retrievedKnowledge": [{"domainConcept": "Concept name", "mechanicsSummary": "Mechanics summary"}],
+              "hypotheses": [{"targetMechanism": "Logic failure breakdown", "contradictionsIdentified": [], "isolatedConfidence": "HIGH/MEDIUM/LOW"}],
               "risksAndActions": {
                 "evaluationVerdict": "ALLOW/REQUIRES_CONFIRMATION/BLOCK",
-                "safeSteps": ["Step 1...", "Step 2..."],
-                "fallbackRollbackVectors": ["Definitive rollback execution path rules"]
+                "safeSteps": ["Step 1..."],
+                "fallbackRollbackVectors": ["Fallback plan"]
               },
               "finalOutputManifest": {
-                "conversationalGreeting": "Professional tone greetings",
-                "structuralSummary": "Pristine engineering summary of findings or explanations",
-                "verificationSteps": ["How to mathematically or technically verify success status"]
+                "conversationalGreeting": "Greeting",
+                "structuralSummary": "Engineering summary findings",
+                "verificationSteps": ["Verification steps"]
               }
             }`
           },
           {
             role: "user",
-            content: `Raw Input Data String:\n${message}\n\nPre-Processed Types: ${baseContext.normalizedInput.matchedTypes.join(', ')}`
+            content: `Raw Input:\n${message}`
           }
         ],
         temperature: 0.15
@@ -72,10 +67,15 @@ export async function POST(request: Request) {
     });
 
     const parsedJsonText = await response.json();
+    
+    // Safety check if Groq returns an API or model error structure instead of choices
+    if (!parsedJsonText.choices || !parsedJsonText.choices[0]) {
+      throw new Error(parsedJsonText.error?.message || "Invalid response returned from Groq gateway.");
+    }
+
     const cleanOutput = JSON.parse(parsedJsonText.choices[0].message.content);
 
-    // 3. Perform immutable context map merging
-    const completeMergedContext = {
+    return NextResponse.json({
       ...baseContext,
       systemObjective: cleanOutput.systemObjective || "Agnostic validation.",
       observations: cleanOutput.observations || baseContext.observations,
@@ -83,11 +83,11 @@ export async function POST(request: Request) {
       hypotheses: cleanOutput.hypotheses || [],
       risksAndActions: cleanOutput.risksAndActions || baseContext.risksAndActions,
       finalOutputManifest: cleanOutput.finalOutputManifest || baseContext.finalOutputManifest,
-      pipelineAuditLog: [...baseContext.pipelineAuditLog, "[Groq Inference Fabric]: Live dynamic reasoning metrics combined cleanly into immutable context maps."]
-    };
-
-    return NextResponse.json(completeMergedContext);
-  } catch (error) {
-    return NextResponse.json({ error: "Pipeline failure during live inference execution routines." }, { status: 500 });
+      pipelineAuditLog: [...baseContext.pipelineAuditLog, "[Groq Inference Fabric]: Live data merged successfully."]
+    });
+  } catch (error: any) {
+    return NextResponse.json({ 
+      error: error.message || "Pipeline failure during live inference execution routines." 
+    }, { status: 500 });
   }
 }

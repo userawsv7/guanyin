@@ -6,6 +6,7 @@ import { UniversalContext } from "@/lib/guanyin/core/Context";
 export default function Home() {
   const [dataPayload, setDataPayload] = useState("");
   const [context, setContext] = useState<UniversalContext | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const clearAndPopulate = (text: string) => {
@@ -15,16 +16,24 @@ export default function Home() {
   const executePipeline = async () => {
     if (!dataPayload.trim()) return;
     setLoading(true);
+    setErrorMessage(null);
+    setContext(null);
     try {
       const response = await fetch("/api/reason", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: dataPayload })
       });
+      
       const data = await response.json();
-      setContext(data);
+      
+      if (!response.ok) {
+        setErrorMessage(data.error || "An unexpected system exception occurred.");
+      } else {
+        setContext(data);
+      }
     } catch (err) {
-      console.error("Pipeline failure trace:", err);
+      setErrorMessage("Failed to establish communication with the serverless backend pipeline.");
     } finally {
       setLoading(false);
     }
@@ -59,17 +68,23 @@ export default function Home() {
         </button>
       </div>
 
+      {errorMessage && (
+        <div style={{ padding: '20px', backgroundColor: '#2d1f1f', borderRadius: '6px', border: '1px solid #f85149', color: '#ff7b72', marginBottom: '25px' }}>
+          <h3 style={{ margin: '0 0 8px 0' }}>🚨 Pipeline Execution Error</h3>
+          <p style={{ margin: 0 }}>{errorMessage}</p>
+        </div>
+      )}
+
       {context && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '26px' }}>
-          
           <div style={{ padding: '20px', backgroundColor: '#161b22', borderRadius: '6px', border: '1px solid #30363d' }}>
             <h3 style={{ color: '#58a6ff', marginTop: 0, borderBottom: '1px solid #21262d', paddingBottom: '8px' }}>⚡ METADATA ROUTER RUNTIME SUMMARY</h3>
             <p style={{ margin: '6px 0' }}><strong>Unique Core Event Token:</strong> <code>{context.eventTokenId}</code></p>
             <p style={{ margin: '6px 0' }}><strong>Inferred Pipeline Stream Intent:</strong> <span style={{ color: '#ffa657', fontWeight: 'bold' }}>{context.detectedIntent}</span></p>
-            <p style={{ margin: '6px 0' }}><strong>Mapped Input Typologies Detected:</strong> {context.normalizedInput.matchedTypes.join(', ')}</p>
+            <p style={{ margin: '6px 0' }}><strong>Mapped Input Typologies Detected:</strong> {context.normalizedInput?.matchedTypes?.join(', ') || 'None'}</p>
             <div style={{ marginTop: '15px', fontSize: '14px', backgroundColor: '#0d1117', padding: '14px', borderRadius: '6px', borderLeft: '4px solid #58a6ff', lineHeight: '1.6' }}>
-              <strong style={{ color: '#58a6ff' }}>{context.finalOutputManifest.conversationalGreeting}</strong>
-              <p style={{ margin: '6px 0 0 0', color: '#e6edf3' }}>{context.finalOutputManifest.structuralSummary}</p>
+              <strong style={{ color: '#58a6ff' }}>{context.finalOutputManifest?.conversationalGreeting}</strong>
+              <p style={{ margin: '6px 0 0 0', color: '#e6edf3' }}>{context.finalOutputManifest?.structuralSummary}</p>
             </div>
           </div>
 
@@ -84,7 +99,7 @@ export default function Home() {
                 </tr>
               </thead>
               <tbody>
-                {context.observations.map((obs) => (
+                {context.observations?.map((obs) => (
                   <tr key={obs.id} style={{ borderBottom: '1px solid #21262d', fontSize: '13px' }}>
                     <td style={{ padding: '8px', color: '#ff7b72' }}>{obs.id}</td>
                     <td style={{ padding: '8px', color: obs.derivedWeight === 'HIGH' ? '#ff7b72' : '#8b949e' }}>{obs.derivedWeight}</td>
@@ -95,7 +110,7 @@ export default function Home() {
             </table>
           </div>
 
-          {context.retrievedKnowledge.length > 0 && (
+          {context.retrievedKnowledge && context.retrievedKnowledge.length > 0 && (
             <div style={{ padding: '20px', backgroundColor: '#161b22', borderRadius: '6px', border: '1px solid #30363d' }}>
               <h3 style={{ color: '#ffa657', marginTop: 0, borderBottom: '1px solid #21262d', paddingBottom: '8px' }}>📚 DYNAMIC SUB-CAPABILITY KNOWLEDGE MAPS</h3>
               {context.retrievedKnowledge.map((k, idx) => (
@@ -107,7 +122,7 @@ export default function Home() {
             </div>
           )}
 
-          {context.detectedIntent === "FORENSIC_ANALYSIS" && context.hypotheses.length > 0 && (
+          {context.detectedIntent === "FORENSIC_ANALYSIS" && context.hypotheses && context.hypotheses.length > 0 && (
             <div style={{ padding: '20px', backgroundColor: '#161b22', borderRadius: '6px', border: '1px solid #30363d' }}>
               <h3 style={{ color: '#ff7b72', marginTop: 0, borderBottom: '1px solid #21262d', paddingBottom: '8px' }}>🔬 DEDUCTED FORENSIC MECHANICAL HYPOTHESIS</h3>
               {context.hypotheses.map((h, idx) => (
@@ -124,14 +139,14 @@ export default function Home() {
             <div style={{ padding: '16px', backgroundColor: '#0d1117', borderRadius: '6px', border: '1px solid #21262d' }}>
               <p style={{ color: '#8b949e', margin: '0 0 10px 0', fontSize: '12px' }}>Discovered Graph Base Vertices:</p>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '15px' }}>
-                {context.relationships.coreTopologyNodes.map(n => (
+                {context.relationships?.coreTopologyNodes?.map(n => (
                   <span key={n.id} style={{ padding: '4px 10px', backgroundColor: '#161b22', border: `1px solid ${n.stateProfile === 'ANOMALOUS' ? '#f85149' : '#30363d'}`, borderRadius: '4px', fontSize: '12px' }}>
                     [{n.id}] {n.entityLabel} <strong style={{ color: '#bc8cff' }}>({n.stateProfile})</strong>
                   </span>
                 ))}
               </div>
-              {context.relationships.coreTopologyEdges.length > 0 && <p style={{ color: '#8b949e', margin: '0 0 5px 0', fontSize: '12px' }}>Structural Primitive Edges:</p>}
-              {context.relationships.coreTopologyEdges.map((e, idx) => (
+              {context.relationships?.coreTopologyEdges && context.relationships.coreTopologyEdges.length > 0 && <p style={{ color: '#8b949e', margin: '0 0 5px 0', fontSize: '12px' }}>Structural Primitive Edges:</p>}
+              {context.relationships?.coreTopologyEdges?.map((e, idx) => (
                 <div key={idx} style={{ color: '#79c0ff', fontSize: '13px' }}><code>{e.sourceId} ───( {e.relationshipLabel} )───► {e.targetId}</code></div>
               ))}
             </div>
@@ -139,34 +154,33 @@ export default function Home() {
 
           <div style={{ padding: '20px', backgroundColor: '#161b22', borderRadius: '6px', border: '1px solid #30363d' }}>
             <h3 style={{ color: '#56d364', marginTop: 0, borderBottom: '1px solid #21262d', paddingBottom: '8px' }}>🛡️ COMPLIANCE CONTROLS & COMPACT SAFETY PLANS</h3>
-            <div style={{ padding: '12px', backgroundColor: context.risksAndActions.evaluationVerdict === 'ALLOW' ? '#1b2a1c' : '#2d1f1f', borderRadius: '4px', border: `1px solid ${context.risksAndActions.evaluationVerdict === 'ALLOW' ? '#238636' : '#f85149'}`, marginBottom: '15px' }}>
-              <p style={{ margin: 0, fontWeight: 'bold' }}>EXECUTION VERDICT DIRECTION: {context.risksAndActions.evaluationVerdict}</p>
+            <div style={{ padding: '12px', backgroundColor: context.risksAndActions?.evaluationVerdict === 'ALLOW' ? '#1b2a1c' : '#2d1f1f', borderRadius: '4px', border: `1px solid ${context.risksAndActions?.evaluationVerdict === 'ALLOW' ? '#238636' : '#f85149'}`, marginBottom: '15px' }}>
+              <p style={{ margin: 0, fontWeight: 'bold' }}>EXECUTION VERDICT DIRECTION: {context.risksAndActions?.evaluationVerdict}</p>
             </div>
-            {context.risksAndActions.safeSteps.length > 0 && (
+            {context.risksAndActions?.safeSteps && context.risksAndActions.safeSteps.length > 0 && (
               <>
                 <h4 style={{ color: '#8b949e', margin: '10px 0 6px 0', fontSize: '13px' }}>Remediation Action Traversal Steps:</h4>
                 <ol style={{ paddingLeft: '20px', margin: 0 }}>{context.risksAndActions.safeSteps.map((s, i) => <li key={i} style={{ margin: '4px 0', fontSize: '13px' }}>{s}</li>)}</ol>
               </>
             )}
-            {context.risksAndActions.fallbackRollbackVectors.length > 0 && (
+            {context.risksAndActions?.fallbackRollbackVectors && context.risksAndActions.fallbackRollbackVectors.length > 0 && (
               <>
                 <h4 style={{ color: '#ff7b72', margin: '14px 0 6px 0', fontSize: '13px' }}>Mandatory Safe Fallback/Rollback Trackers:</h4>
                 <ul style={{ paddingLeft: '20px', margin: 0 }}>{context.risksAndActions.fallbackRollbackVectors.map((r, i) => <li key={i} style={{ margin: '4px 0', fontSize: '13px', color: '#ff7b72' }}>{r}</li>)}</ul>
               </>
             )}
             <h4 style={{ color: '#79c0ff', margin: '14px 0 6px 0', fontSize: '13px' }}>Post-Remediation Verification Manifest:</h4>
-            <ul style={{ paddingLeft: '20px', margin: 0 }}>{context.finalOutputManifest.verificationSteps.map((v, i) => <li key={i} style={{ margin: '4px 0', fontSize: '13px' }}>{v}</li>)}</ul>
+            <ul style={{ paddingLeft: '20px', margin: 0 }}>{context.finalOutputManifest?.verificationSteps?.map((v, i) => <li key={i} style={{ margin: '4px 0', fontSize: '13px' }}>{v}</li>)}</ul>
           </div>
 
           <div style={{ padding: '20px', backgroundColor: '#161b22', borderRadius: '6px', border: '1px solid #30363d' }}>
             <h3 style={{ color: '#8b949e', marginTop: 0, borderBottom: '1px solid #21262d', paddingBottom: '8px' }}>🪵 DECOUPLED IMMUTABLE PIPELINE AUDIT COMPREHENSION TRACE LOGS</h3>
-            {context.pipelineAuditLog.map((log, idx) => (
+            {context.pipelineAuditLog?.map((log, idx) => (
               <div key={idx} style={{ padding: '6px 0', borderBottom: '1px solid #21262d', fontSize: '12px', color: '#8b949e' }}>
                 <code>{log}</code>
               </div>
             ))}
           </div>
-
         </div>
       )}
     </main>
