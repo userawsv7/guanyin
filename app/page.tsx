@@ -117,24 +117,25 @@ export default function Home() {
                 </div>
               ))}
             </div>
-         
+          )}
 
           <div style={{ padding: '20px', backgroundColor: '#161b22', borderRadius: '6px', border: '1px solid #30363d' }}>
             <h3 style={{ color: '#bc8cff', marginTop: 0, borderBottom: '1px solid #21262d', paddingBottom: '8px' }}>🌐 DATA-DRIVEN ABSTRACT MODEL SCHEMA LAYER</h3>
             <div style={{ padding: '16px', backgroundColor: '#0d1117', borderRadius: '6px', border: '1px solid #21262d' }}>
-              <p style={{ color: '#8b949e', margin: '0 0 10px 0', fontSize: '12px' }}>Discovered GBase Vertices:</p>
+              <p style={{ color: '#8b949e', margin: '0 0 10px 0', fontSize: '12px' }}>Discovered Graph Base Vertices:</p>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '15px' }}>
                 {context.relationships.coreTopologyNodes.map(n => (
                   <span key={n.id} style={{ padding: '4px 10px', backgroundColor: '#161b22', border: `1px solid ${n.stateProfile === 'ANOMALOUS' ? '#f85149' : '#30363d'}`, borderRadius: '4px', fontSize: '12px' }}>
                     [{n.id}] {n.entityLabel} <strong style={{ color: '#bc8cff' }}>({n.stateProfile})</strong>
-               </span>
+                  </span>
                 ))}
               </div>
               {context.relationships.coreTopologyEdges.length > 0 && <p style={{ color: '#8b949e', margin: '0 0 5px 0', fontSize: '12px' }}>Structural Primitive Edges:</p>}
               {context.relationships.coreTopologyEdges.map((e, idx) => (
                 <div key={idx} style={{ color: '#79c0ff', fontSize: '13px' }}><code>{e.sourceId} ───( {e.relationshipLabel} )───► {e.targetId}</code></div>
               ))}
-            </          </div>
+            </div>
+          </div>
 
           <div style={{ padding: '20px', backgroundColor: '#161b22', borderRadius: '6px', border: '1px solid #30363d' }}>
             <h3 style={{ color: '#56d364', marginTop: 0, borderBottom: '1px solid #21262d', paddingBottom: '8px' }}>🛡️ COMPLIANCE CONTROLS & COMPACT SAFETY PLANS</h3>
@@ -158,7 +159,7 @@ export default function Home() {
           </div>
 
           <div style={{ padding: '20px', backgroundColor: '#161b22', borderRadius: '6px', border: '1px solid #30363d' }}>
-            <h3 style={{ color: '#8b949e', marginTop: 0, borderBottom: '1px solid #21262d', paddingBottom: '8px' }}>🪵 DECOUPLED IMMUTABLE COMPREHENSION TRACE LOGS</h3>
+            <h3 style={{ color: '#8b949e', marginTop: 0, borderBottom: '1px solid #21262d', paddingBottom: '8px' }}>🪵 DECOUPLED IMMUTABLE PIPELINE AUDIT COMPREHENSION TRACE LOGS</h3>
             {context.pipelineAuditLog.map((log, idx) => (
               <div key={idx} style={{ padding: '6px 0', borderBottom: '1px solid #21262d', fontSize: '12px', color: '#8b949e' }}>
                 <code>{log}</code>
