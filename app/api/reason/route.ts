@@ -32,7 +32,7 @@ export async function POST(request: Request) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-specdec",
+        model: "llama-3.3-70b-versatile", // Updated to the correct active model tier
         response_format: { type: "json_object" },
         messages: [
           {
@@ -68,7 +68,6 @@ export async function POST(request: Request) {
 
     const parsedJsonText = await response.json();
     
-    // Safety check if Groq returns an API or model error structure instead of choices
     if (!parsedJsonText.choices || !parsedJsonText.choices[0]) {
       throw new Error(parsedJsonText.error?.message || "Invalid response returned from Groq gateway.");
     }
